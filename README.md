@@ -13,8 +13,8 @@ The package currently exposes three public symbols:
 ### Prerequisites
 
 `openmm-pyscf` requires recent versions of:
-- **`openmm`** (>= 8.0)
-- **`pyscf`** (>= 2.0)
+- **`openmm`**
+- **`pyscf`**
 - **`numpy`**
 - **`pyscf-dispersion`** (required for D3/D4 dispersion-corrected functionals, e.g. `b3lyp-d3`, `pbe0-d3`, etc.)
 
