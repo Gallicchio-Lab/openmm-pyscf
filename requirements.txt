@@ -1,0 +1,10 @@
+# Core runtime dependencies
+openmm >=8.0
+pyscf >=2.0
+numpy
+pyscf-dispersion
+
+# Testing and example dependencies
+pytest
+openmmforcefields
+openff-toolkit
