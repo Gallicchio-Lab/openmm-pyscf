@@ -1,12 +1,29 @@
-# openmm-pyscf
+# OpenMM-PySCF
 
 `openmm-pyscf` integrates PySCF electronic-structure calculations into OpenMM through `openmm.PythonForce` callbacks.
 
-The package currently exposes three public symbols:
+The API mirrors the [openmm-ml](https://github.com/openmm/openmm-ml) package. It exposes three public symbols:
 
 - `PySCFPotential`
 - `PySCFPythonForce`
 - `make_openmm_python_force`
+
+## Use Cases
+
+- Simulate systems at the QM and QM/MM levels of theory
+- Compare the accuracy of ML potentials (available through [openmm-ml](https://github.com/openmm/openmm-ml) to QM and QM/MM references
+
+## Credits
+
+- Author: Emilio Gallicchio <emilio.gallicchio@gmail.com>
+- The [OpenMM](https://openmm.org/development) development team
+- The [PySCF](https://pyscf.org/about.html) development team
+- This software, including tests, examples, and documentation, was developed with the assistance of an AI coding agent (Gemini 3.7 Flash)
+
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Installation
 
@@ -42,10 +59,10 @@ conda install --file requirements.txt -c conda-forge
 
 ### Installing `openmm-pyscf`
 
-Install `openmm-pyscf` in development (editable) mode from the repository root:
+Install `openmm-pyscf` from the repository root:
 
 ```bash
-pip install -e .
+pip install .
 ```
 
 ## Public API
@@ -56,6 +73,7 @@ pip install -e .
 
 - a full-QM OpenMM `System` with `createSystem(topology)`, or
 - a QM/MM mixed `System` with `createMixedSystem(topology, system, atoms, ...)` using electronic embedding.
+- see the [PySCF documentation](https://pyscf.org/user/index.html) for the meaning and valid settings for the QM model parameters (`method`, `basis`, etc.)
 
 Constructor:
 
@@ -84,7 +102,7 @@ Parameters:
 - `method`: PySCF method or DFT functional string. Examples: `"hf"`, `"rhf"`, `"uhf"`, `"rohf"`, `"b3lyp"`.
 - `basis`: PySCF basis name.
 - `charge`: Total QM charge.
-- `multiplicity`: Spin multiplicity. Internally PySCF uses `spin = multiplicity - 1`.
+- `multiplicity`: Spin multiplicity. Internally, PySCF uses `spin = multiplicity - 1`.
 - `memory`: PySCF memory limit. Accepts values like `1024`, `"1024"`, or `"1 GB"`.
 - `num_threads`: Optional PySCF thread count.
 - `pyscf_options`: Optional mapping of attributes to set directly on the PySCF mean-field object.
@@ -266,10 +284,7 @@ In this mode:
 ## Notes on units
 
 - Input positions are expected in nanometers when passed through OpenMM states or OpenMM quantities.
-- Internal PySCF geometries are built in Angstrom.
+- Internal PySCF geometries are built in Angstroms.
 - Reported energies are converted to `kJ/mol`.
 - Reported forces are converted to `kJ/mol/nm`.
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
