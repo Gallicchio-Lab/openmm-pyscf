@@ -1,7 +1,7 @@
 """Periodic QM/MM ACE+water example using OpenMM and openmm-pyscf.
 
 Workflow:
-1. Load example/data/acewater.pdb.
+1. Load examples/data/acewater.pdb.
 2. Build an MM reference system with Amber + SPC water, with OpenFF 2.3
     templates for chain Q residues.
 3. Define the QM region as all atoms in chain Q.
@@ -18,7 +18,7 @@ import openmm as mm
 import openmm.app as app
 from openmm import unit
 
-# Allow running this script directly from the example folder.
+# Allow running this script directly from the examples folder.
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))

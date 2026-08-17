@@ -46,4 +46,4 @@ ENV/
 
 # Temporary logs and test artifacts
 *.log
-example/LOG
+examples/LOG

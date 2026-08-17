@@ -221,12 +221,12 @@ print(state.getPotentialEnergy())
 print(state.getForces(asNumpy=True))
 ```
 
-See also [example/mdh2o.py](example/mdh2o.py) for a short MD example.
+See also [examples/mdh2o.py](examples/mdh2o.py) for a short MD example.
 
 ## Examples
 
-- [example/mdh2o.py](example/mdh2o.py): full-QM one-water MD example.
-- [example/mdacewater.py](example/mdacewater.py): periodic QM/MM ACE+water example with chain `Q` as the QM region, Amber+SPC water MM model, 50-step minimization, and 100 Langevin NVT steps.
+- [examples/mdh2o.py](examples/mdh2o.py): full-QM one-water MD example.
+- [examples/mdacewater.py](examples/mdacewater.py): periodic QM/MM ACE+water example with chain `Q` as the QM region, Amber+SPC water MM model, 50-step minimization, and 100 Langevin NVT steps.
 
 ## Example: QM/MM mixed system
 
