@@ -11,7 +11,7 @@ The API mirrors the [openmm-ml](https://github.com/openmm/openmm-ml) package. It
 ## Use Cases
 
 - Simulate systems at the QM and QM/MM levels of theory
-- Compare the accuracy of ML potentials (available through [openmm-ml](https://github.com/openmm/openmm-ml) to QM and QM/MM references
+- Compare the accuracy of ML potentials (available through [openmm-ml](https://github.com/openmm/openmm-ml)) to QM and QM/MM references
 
 ## Credits
 
