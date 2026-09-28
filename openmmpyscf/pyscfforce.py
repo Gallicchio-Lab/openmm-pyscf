@@ -53,6 +53,12 @@ ANGSTROM_PER_NANOMETER = 10.0
 BOHR_PER_ANGSTROM = 1.8897261254578281
 
 
+def _to_numpy_array(x, dtype=float) -> np.ndarray:
+    if hasattr(x, "get"):
+        return np.asarray(x.get(), dtype=dtype)
+    return np.asarray(x, dtype=dtype)
+
+
 @dataclass(frozen=True)
 class PySCFResult:
     energy: unit.Quantity
@@ -294,6 +300,7 @@ class PySCFPythonForce:
 
                 if hasattr(mf, "to_gpu"):
                     mf = mf.to_gpu()
+                    mf.chkfile = None
                 else:
                     warnings.warn(
                         "GPU requested (use_gpu=True) but this method does not support to_gpu(); using CPU",
@@ -326,7 +333,7 @@ class PySCFPythonForce:
         molecule = self._build_qm_system(positions_ang)
         qm_model = self._build_method(molecule, positions_ang)
         energy_hartree = float(qm_model.kernel())
-        gradient_hartree_per_bohr = np.asarray(qm_model.nuc_grad_method().kernel(), dtype=float)
+        gradient_hartree_per_bohr = _to_numpy_array(qm_model.nuc_grad_method().kernel(), dtype=float)
         return energy_hartree, gradient_hartree_per_bohr
 
     def _evaluate_nonperiodic(self, positions_nm: np.ndarray) -> PySCFResult:
@@ -499,11 +506,18 @@ class _ElectronicEmbeddingPySCFPythonForce(PySCFPythonForce):
 
         mm_positions_ang = positions_ang[list(self.mm_atoms)]
 
+        is_gpu = hasattr(qm_model, "to_cpu")
         if self.periodic_box_vectors_ang is None:
-            from pyscf import qmmm
+            if is_gpu:
+                from gpu4pyscf import qmmm
+            else:
+                from pyscf import qmmm
             qm_model = qmmm.mm_charge(qm_model, mm_positions_ang, self.mm_charges)
         else:
-            from pyscf.qmmm.pbc import itrf as pbc_itrf
+            if is_gpu:
+                from gpu4pyscf.qmmm.pbc import itrf as pbc_itrf
+            else:
+                from pyscf.qmmm.pbc import itrf as pbc_itrf
             qm_model = pbc_itrf.add_mm_charges(
                 qm_model,
                 mm_positions_ang,
@@ -514,6 +528,8 @@ class _ElectronicEmbeddingPySCFPythonForce(PySCFPythonForce):
                 rcut_hcore=self.rcut_hcore,
                 unit="Angstrom",
             )
+        if is_gpu:
+            qm_model.chkfile = None
 
         return qm_model
 
@@ -534,19 +550,19 @@ class _ElectronicEmbeddingPySCFPythonForce(PySCFPythonForce):
         if self.periodic_box_vectors_ang is not None:
             if getattr(qm_model, "with_df", None) is not None:
                 gradient.auxbasis_response = True
-            qm_gradient_hartree_per_bohr = np.asarray(gradient.kernel(), dtype=float)
+            qm_gradient_hartree_per_bohr = _to_numpy_array(gradient.kernel(), dtype=float)
             if len(self.mm_atoms) > 0:
                 dm = qm_model.make_rdm1()
-                mm_gradient_hartree_per_bohr = np.asarray(
+                mm_gradient_hartree_per_bohr = _to_numpy_array(
                     gradient.grad_nuc_mm() + gradient.grad_hcore_mm(dm) + gradient.de_ewald_mm,
                     dtype=float,
                 )
             else:
                 mm_gradient_hartree_per_bohr = np.zeros((0, 3), dtype=float)
         else:
-            qm_gradient_hartree_per_bohr = np.asarray(gradient.kernel(), dtype=float)
+            qm_gradient_hartree_per_bohr = _to_numpy_array(gradient.kernel(), dtype=float)
             if len(self.mm_atoms) > 0:
-                mm_gradient_hartree_per_bohr = np.asarray(
+                mm_gradient_hartree_per_bohr = _to_numpy_array(
                     gradient.grad_hcore_mm(qm_model.make_rdm1()) + gradient.grad_nuc_mm(),
                     dtype=float,
                 )
