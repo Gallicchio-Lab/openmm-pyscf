@@ -789,6 +789,19 @@ class PySCFPotential:
                 else:
                     force.addException(atom1, atom2, charge_prod, sigma, epsilon, True)
 
+        # Zero out particle charges for all QM atoms in NonbondedForce.
+        # In OpenMM, exceptions with chargeProd = 0.0 only eliminate the real-space
+        # Coulomb interactions. Under Particle Mesh Ewald (PME), reciprocal-space
+        # mesh electrostatics are computed directly from the particle parameters.
+        # If QM atom charges are not set to 0.0 in NonbondedForce:
+        # 1) QM-MM long-range electrostatics are double-counted (once by PySCF PBC
+        #    electronic embedding, and once by OpenMM PME reciprocal space).
+        # 2) In alchemical transformations (e.g. ATM), moving QM coordinates creates
+        #    spurious electrostatic changes on OpenMM's PME grid against static MM charges.
+        for atom in qm_atoms:
+            _, sigma, epsilon = force.getParticleParameters(atom)
+            force.setParticleParameters(atom, 0.0, sigma, epsilon)
+
     def getSupportedEmbeddings(self) -> list[str]:
         return ["electronic"]
 
