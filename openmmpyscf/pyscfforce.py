@@ -17,12 +17,13 @@ def _patch_pyscf_einsum():
     try:
         if hasattr(lib, "numpy_helper") and hasattr(lib.numpy_helper, "einsum"):
             def _safe_einsum(subscripts, *tensors, **kwargs):
-                contract = kwargs.pop('_contract', lib.numpy_helper._contract)
+                _contract_fn = getattr(lib.numpy_helper, '_contract', None) or lib.numpy_helper.contract
+                contract = kwargs.pop('_contract', _contract_fn)
                 subscripts = subscripts.replace(' ', '')
                 if len(tensors) <= 1 or '...' in subscripts:
                     return np.einsum(subscripts, *tensors, **kwargs)
                 elif len(tensors) <= 2:
-                    return lib.numpy_helper._contract(subscripts, *tensors, **kwargs)
+                    return contract(subscripts, *tensors, **kwargs)
                 else:
                     optimize = kwargs.pop('optimize', True)
                     tensors = list(tensors)
