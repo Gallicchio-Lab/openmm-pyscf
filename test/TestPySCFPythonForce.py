@@ -401,6 +401,66 @@ def test_periodic_mixed_system_md():
         del integrator
 
 
+def test_periodic_mixed_system_pbc_exceptions():
+    """Verify PME mixed systems enforce PBC minimum-image distances on QM-MM LJ exceptions."""
+    box_vectors = (
+        unit.nanometer * mm.Vec3(2.5, 0.0, 0.0),
+        unit.nanometer * mm.Vec3(0.0, 2.5, 0.0),
+        unit.nanometer * mm.Vec3(0.0, 0.0, 2.5),
+    )
+    topology = app.Topology()
+    topology.setPeriodicBoxVectors(box_vectors)
+    chain = topology.addChain()
+    res_qm = topology.addResidue("HOH", chain)
+    topology.addAtom("O1", app.element.oxygen, res_qm)
+    topology.addAtom("H11", app.element.hydrogen, res_qm)
+    topology.addAtom("H12", app.element.hydrogen, res_qm)
+    res_mm = topology.addResidue("HOH", chain)
+    topology.addAtom("O2", app.element.oxygen, res_mm)
+    topology.addAtom("H21", app.element.hydrogen, res_mm)
+    topology.addAtom("H22", app.element.hydrogen, res_mm)
+
+    mm_system = mm.System()
+    mm_system.setDefaultPeriodicBoxVectors(*box_vectors)
+    for atom in topology.atoms():
+        mm_system.addParticle(atom.element.mass)
+
+    nonbonded = mm.NonbondedForce()
+    nonbonded.setNonbondedMethod(mm.NonbondedForce.PME)
+    nonbonded.setCutoffDistance(0.9 * unit.nanometer)
+    for idx in range(6):
+        if idx in (0, 3):
+            nonbonded.addParticle(-0.82, 0.316557 * unit.nanometer, 0.6502 * unit.kilojoules_per_mole)
+        else:
+            nonbonded.addParticle(0.41, 0.1 * unit.nanometer, 0.0 * unit.kilojoules_per_mole)
+    mm_system.addForce(nonbonded)
+
+    potential = PySCFPotential(method="hf", basis="3-21g", charge=0, multiplicity=1, num_threads=1)
+    mixed_system = potential.createMixedSystem(
+        topology, mm_system, atoms=[0, 1, 2], embedding="electronic"
+    )
+    mixed_nb = [f for f in mixed_system.getForces() if isinstance(f, mm.NonbondedForce)][0]
+    assert mixed_nb.getExceptionsUsePeriodicBoundaryConditions() is True
+
+    pos_primary = np.array(
+        [
+            [0.000, 0.000, 0.000],
+            [0.0957, 0.000, 0.000],
+            [-0.0239, 0.0927, 0.000],
+            [0.240, 0.000, 0.000],
+            [0.3357, 0.000, 0.000],
+            [0.2161, 0.0927, 0.000],
+        ]
+    )
+    pos_shifted = pos_primary.copy()
+    pos_shifted[3:, 0] += 2.5  # shift MM water by +1 periodic box vector
+
+    e_primary, f_primary = report_system_state(mixed_system, pos_primary * unit.nanometer)
+    e_shifted, f_shifted = report_system_state(mixed_system, pos_shifted * unit.nanometer)
+    assert abs(e_primary - e_shifted) < 1e-3
+    assert np.max(np.abs(f_primary - f_shifted)) < 5e-2
+
+
 if __name__ == "__main__":
     test_wrapper()
     test_solvation_configuration()
@@ -412,4 +472,5 @@ if __name__ == "__main__":
     test_periodic_mixed_system_rejects_non_orthogonal_box()
     test_periodic_mixed_system_finite_difference()
     test_periodic_mixed_system_md()
+    test_periodic_mixed_system_pbc_exceptions()
     print("All tests passed successfully!")

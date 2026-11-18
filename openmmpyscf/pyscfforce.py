@@ -802,6 +802,14 @@ class PySCFPotential:
             _, sigma, epsilon = force.getParticleParameters(atom)
             force.setParticleParameters(atom, 0.0, sigma, epsilon)
 
+        # Because every QM-MM Lennard-Jones interaction has been converted into a
+        # NonbondedForce exception, periodic NonbondedForces must evaluate exceptions
+        # using minimum-image periodic distances; otherwise unwrapped MM solvent
+        # molecules in adjacent periodic cells lose Pauli repulsion against QM atoms
+        # while pyscf.qmmm.pbc wraps their point charges onto the QM region.
+        if force.usesPeriodicBoundaryConditions():
+            force.setExceptionsUsePeriodicBoundaryConditions(True)
+
     def getSupportedEmbeddings(self) -> list[str]:
         return ["electronic"]
 
